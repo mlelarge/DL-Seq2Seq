@@ -107,7 +107,7 @@ class decoder_skrnn(nn.Module):
         pi_t, mu1_t, mu2_t, s1_t, s2_t, rho_t = torch.split(gmm_params,1,2)
 
         q_t = F.softmax(q_t, dim=1).view(-1,3)
-        pi_t = F.softmax(pi_t.squeeze(2).transpose(0,1)).view(-1,self.num_gaussian)
+        pi_t = F.softmax(pi_t.squeeze(2).transpose(0,1),dim=1).view(-1,self.num_gaussian)
         mu1_t = mu1_t.squeeze(2).transpose(0,1).view(-1,self.num_gaussian)
         mu2_t = mu2_t.squeeze(2).transpose(0,1).view(-1,self.num_gaussian)  
         s1_t = torch.exp(s1_t.squeeze(2).transpose(0,1)).view(-1,self.num_gaussian)
@@ -131,7 +131,7 @@ def skrnn_loss(gmm_params, kl_params, data, mask=[], device =None):
       ##########################################################
         return numer / deno
     
-    eos = torch.stack([torch.Tensor([0,0,0,0,1])]*data.size()[0], device = device).unsqueeze(1)
+    eos = torch.stack([torch.Tensor([0,0,0,0,1])]*data.size()[0]).unsqueeze(1).to(device)
     data = torch.cat([data, eos], 1) 
     
     target = data.view(-1, 5)

@@ -92,7 +92,7 @@ def get_data(data_type='kanji', max_len=200):
     if data_type == 'kanji':
         raw_data = pd.read_pickle('sketch-rnn-datasets/kanji/kanji.cpkl')
     elif data_type == 'cat':
-        raw_data = np.load('sketch-rnn-datasets/cat/cat.npz', encoding='latin1')['train']        
+        raw_data = np.load('sketch-rnn-datasets/cat/cat.npz', encoding='latin1',allow_pickle=True)['train']        
         
     all_len = [len(i)for i in raw_data]
     max_len = max(all_len)

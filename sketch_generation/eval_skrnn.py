@@ -26,7 +26,9 @@ def draw_image(a, color=None, save=False, save_dir=None):
     for s in strokes:
         plt.plot(s[:,0],-s[:,1],color=color)
     if save:
-        plt.savefig(save_dir+str(np.random.randint(0,5000)))
+        file_name = save_dir+str(np.random.randint(0,5000))
+        print(file_name)
+        plt.savefig(file_name)
     plt.show()
     
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -61,8 +63,8 @@ def load_pretrained_uncond(data_type):
                             latent_dim = latent_dim, device = device, cond_gen= cond_gen).to(device)
 
     if data_type == 'cat':
-        encoder.load_state_dict(torch.load('saved_model/UncondEnc_cat.pt')['model'])
-        decoder.load_state_dict(torch.load('saved_model/UncondDec_cat.pt')['model'])
+        encoder.load_state_dict(torch.load('saved_model/UncondEnc_cat.pt',map_location='cuda:0')['model'])
+        decoder.load_state_dict(torch.load('saved_model/UncondDec_cat.pt',map_location='cuda:0')['model'])
         data_enc, data_dec, max_seq_len = get_data(data_type='cat')
     else:
         encoder.load_state_dict(torch.load('saved_model/UncondEnc_kanji.pt')['model'])

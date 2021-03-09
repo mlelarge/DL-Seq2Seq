@@ -1,15 +1,11 @@
-"""
-** deeplean-ai.com **
-created by :: GauravBh1010tt
-contact :: gauravbhatt.deeplearn@gmail.com
-"""
+# eval_nmt
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.ticker as ticker
-from data_load import *
-from model import *
 import torch
+
+eng_lang, fr_lang , _ = prepareData('eng', 'fra', False)
 
 def load_pre_trained(lang):
     ####################################################
@@ -22,19 +18,23 @@ def load_pre_trained(lang):
     ####################################################
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    input_lang, output_lang, pairs = prepareData('eng', 'fra', fra_to_eng)
-    encoder = EncoderRNN(input_lang.n_words, hidden_size, n_layers).to(device)
-    decoder = AttnDecoderRNN(hidden_size, output_lang.n_words, attn_score, n_layers, dropout_p).to(device)
+
     if lang == 'eng-fra':
-        encoder.load_state_dict(torch.load('saved_model/eng-fra/encoder.pt')['model'])
-        decoder.load_state_dict(torch.load('saved_model/eng-fra/decoder.pt')['model'])
+        input_lang, output_lang = eng_lang, fr_lang
+        encoder = EncoderRNN(input_lang.n_words, hidden_size, n_layers).to(device)
+        decoder = AttnDecoderRNN(hidden_size, output_lang.n_words, attn_score, n_layers, dropout_p).to(device)
+        encoder.load_state_dict(torch.load('/content/drive/MyDrive/MAP583/neural_machine_translation/saved_model/eng-fra/encoder.pt')['model'])
+        decoder.load_state_dict(torch.load('/content/drive/MyDrive/MAP583/neural_machine_translation/saved_model/eng-fra/decoder.pt')['model'])
     else:
-        encoder.load_state_dict(torch.load('saved_model/fra-eng/encoder.pt')['model'])
-        decoder.load_state_dict(torch.load('saved_model/fra-eng/decoder.pt')['model'])
+        input_lang, output_lang  = fr_lang, eng_lang
+        encoder = EncoderRNN(input_lang.n_words, hidden_size, n_layers).to(device)
+        decoder = AttnDecoderRNN(hidden_size, output_lang.n_words, attn_score, n_layers, dropout_p).to(device)
+        encoder.load_state_dict(torch.load('/content/drive/MyDrive/MAP583/neural_machine_translation/saved_model/fra-eng/encoder.pt')['model'])
+        decoder.load_state_dict(torch.load('/content/drive/MyDrive/MAP583/neural_machine_translation/saved_model/fra-eng/decoder.pt')['model'])
 
     return encoder, decoder
 
-def evaluate(sentence, encoder, decoder, max_length=MAX_LENGTH):
+def evaluate(sentence, encoder, decoder, input_lang,output_lang, max_length=MAX_LENGTH):
     with torch.no_grad():
         input_tensor = tensorFromSentence(input_lang, sentence)
         input_length = input_tensor.size()[0]
@@ -97,7 +97,12 @@ def evalRand(n=1):
         
 def evalText(inp, encoder, decoder, inp_lang = 'English', out_lang = 'French'):
     print('%s Text -->'%inp_lang, inp)
-    output_words, attn = evaluate(inp, encoder, decoder)
+    if  inp_lang == 'English':
+      input_lang, output_lang = eng_lang, fr_lang 
+    else :
+      input_lang, output_lang  = fr_lang, eng_lang
+
+    output_words, attn = evaluate(inp, encoder, decoder,input_lang,output_lang)
     output_sentence = ' '.join(output_words)
     print('%s o/p -->'%out_lang, output_sentence)
     print('')

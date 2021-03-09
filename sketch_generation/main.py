@@ -21,7 +21,6 @@ from eval_skrnn import draw_image
 
 warnings.simplefilter('ignore')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 '''if using multiple GPUs use this option'''
 #torch.cuda.set_device(1)
 
@@ -32,7 +31,7 @@ num_gaussian = 20
 dropout_p = 0.2
 batch_size = 50
 latent_dim = 64 
-weight_kl = 0.5
+weight_kl = 1.0
 kl_tolerance = 0.2
 eta_min = 0.01
 R_step =  0.99995
@@ -45,8 +44,9 @@ plot_every = 1 # plot the strokes using current trained model
 
 rnn_dir = 2 # 1 for unidirection,  2 for bi-direction
 bi_mode = 2 # bidirectional mode:- 1 for addition 2 for concatenation
-cond_gen = False # use either unconditional or conditional generation
-data_type = 'cat' # 'cat' and 'kanji'
+cond_gen = True # use either unconditional or conditional generation
+data_type = 'interpolation' # 'cat' and 'kanji'
+train_mode = 'train'
 
 if not cond_gen:
     weight_kl = 0.0
@@ -64,7 +64,7 @@ decoder = decoder_skrnn(input_size = 5, hidden_size = hidden_dec_dim, num_gaussi
 encoder_optimizer = optim.Adam(encoder.parameters(), lr=learning_rate)
 decoder_optimizer = optim.Adam(decoder.parameters(), lr=learning_rate)
 
-data_enc, data_dec, max_seq_len = get_data(data_type=data_type)
+data_enc, data_dec, max_seq_len = get_data(data_type=data_type, train_mode = train_mode)
 
 num_mini_batch = len(data_dec) - (len(data_dec) % batch_size)
 
@@ -125,17 +125,35 @@ for epoch in range(epochs):
             strokes, mix_params = skrnn_sample(encoder, decoder, hidden_dec_dim, latent_dim, inp_enc = enc_rnd,
                                                time_step=max_seq_len, cond_gen=cond_gen,bi_mode= bi_mode, device=device)
         draw_image(strokes)
+        
+        
+    if epoch % 1==0:
+        if cond_gen:
+            fname_enc = 'CondEnc_'+data_type+'_w'+str(weight_kl)+'.pt'
+            fname_dec = 'CondDec_'+data_type+'_w'+str(weight_kl)+'.pt'
+            save_checkpoint(epoch, encoder, encoder_optimizer, 'saved_model', \
+                                filename = fname_enc)
+            save_checkpoint(epoch, decoder, decoder_optimizer, 'saved_model', \
+                                filename = fname_dec)
+        else:
+            fname_enc = 'UncondEnc_'+data_type+'_w'+str(weight_kl)+'.pt'
+            fname_dec = 'UncondDec_'+data_type+'_w'+str(weight_kl)+'.pt'
+            save_checkpoint(epoch, encoder, encoder_optimizer, 'saved_model', \
+                                filename = fname_enc)
+            save_checkpoint(epoch, decoder, decoder_optimizer, 'saved_model', \
+                                filename = fname_dec)
+
     
 if cond_gen:
-    fname_enc = 'CondEnc_'+data_type+'.pt'
-    fname_dec = 'CondDec_'+data_type+'.pt'
+    fname_enc = 'CondEnc_'+data_type+'_w'+str(weight_kl)+'.pt'
+    fname_dec = 'CondDec_'+data_type+'_w'+str(weight_kl)+'.pt'
     save_checkpoint(epoch, encoder, encoder_optimizer, 'saved_model', \
                         filename = fname_enc)
     save_checkpoint(epoch, decoder, decoder_optimizer, 'saved_model', \
                         filename = fname_dec)
 else:
-    fname_enc = 'UncondEnc_'+data_type+'.pt'
-    fname_dec = 'UncondDec_'+data_type+'.pt'
+    fname_enc = 'UncondEnc_'+data_type+'_w'+str(weight_kl)+'.pt'
+    fname_dec = 'UncondDec_'+data_type+'_w'+str(weight_kl)+'.pt'
     save_checkpoint(epoch, encoder, encoder_optimizer, 'saved_model', \
                         filename = fname_enc)
     save_checkpoint(epoch, decoder, decoder_optimizer, 'saved_model', \

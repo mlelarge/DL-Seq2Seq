@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import torch
 import os
+#from eval_skrnn import draw_image
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -88,15 +89,29 @@ def get_batch_validation(data_enc, data_dec, batch_size):
     return data_e, data_d
 
 
-def get_data(data_type='kanji', max_len=200):
+def get_data(data_type='kanji', max_len=200, train_mode = 'test'):
+
+    if train_mode != 'test' and train_mode !='train':
+        raise NameError('train_mode = train or test')
+         
     if data_type == 'kanji':
         raw_data = pd.read_pickle('sketch-rnn-datasets/kanji/kanji.cpkl')
-    elif data_type == 'cat':
-        raw_data = np.load('sketch-rnn-datasets/cat/cat.npz', encoding='latin1',allow_pickle=True)['train']        
         
+    elif data_type == 'cat':
+        raw_data = np.load('sketch-rnn-datasets/cat/cat.npz', encoding='latin1',allow_pickle=True)[train_mode]        
+
+    elif data_type == 'cake':
+        raw_data = np.load('sketch-rnn-datasets/cake/cake.npz', encoding='latin1',allow_pickle=True)[train_mode]        
+
+    elif data_type == 'interpolation':
+        raw_data1 = np.load('sketch-rnn-datasets/cat/cat.npz', encoding='latin1',allow_pickle=True)[train_mode]        
+        raw_data2 = np.load('sketch-rnn-datasets/cake/cake.npz', encoding='latin1',allow_pickle=True)[train_mode]        
+        raw_data = np.concatenate([raw_data1, raw_data2])
+        np.random.shuffle(raw_data) 
+    
     all_len = [len(i)for i in raw_data]
     max_len = max(all_len)
-    
+
     raw_data = purify(raw_data)
     
     data_enc = np.zeros((len(raw_data), max_len, 5))

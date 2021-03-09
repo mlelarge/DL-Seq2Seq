@@ -26,7 +26,6 @@ class encoder_skrnn(nn.Module):
         self.rnn = nn.LSTM(input_size, hidden_size, n_layers, dropout=dropout_p,\
                            batch_first=True, bidirectional=rnn_dir==2)
         self.initial = nn.Linear(self.Nz, hidden_dec_size*2)
-        
         self.mu = nn.Linear(hidden_size*bi_mode, self.Nz)
         self.sigma = nn.Linear(hidden_size*bi_mode, self.Nz)
 
@@ -157,7 +156,7 @@ def skrnn_loss(gmm_params, kl_params, data, mask=[], device =None):
 
 def skrnn_sample(encoder, decoder, hidden_size, latent_dim, start=[0,0,1,0,0], temperature=1.0, \
                   time_step=100, scale = 20, bi_mode= 1, random_state= 98, cond_gen=False, inp_enc=False, device=None):
-    
+    #print(temperature)
     np.random.seed(random_state)
     encoder.train(False)
     decoder.train(False)
